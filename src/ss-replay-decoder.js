@@ -39,10 +39,27 @@ function checkSSFile(file, completion) {
 	reader.readAsArrayBuffer(file);
 }
 
+// 1 = Easy, 3 = Normal, 5 = Hard, 7 = Expert, 9 = Expert+
+const ssDifficultyNames = {
+	'1': 'Easy',
+	'3': 'Normal',
+	'5': 'Hard',
+	'7': 'Expert',
+	'9': 'ExpertPlus',
+};
 function ssReplayToBSOR(ssReplay) {
-	var result = {ssReplay: true};
+	var result = {ssReplay: true, ssData: ssReplay};
 
-	result.info = ssReplay.info;
+	result.info = Object.assign({}, ssReplay.info);
+	const difficulty = ssDifficultyNames[ssReplay.info.difficulty];
+	if (difficulty !== undefined) {
+		result.info.difficulty = difficulty;
+	} else {
+		result.info.difficulty = ssReplay.info.difficulty.toString();
+	}
+	result.info.modifiers = ssReplay.info.modifiers.join(', ');
+	result.info.hash = ssReplay.info.hash.replace(/^custom_level_/,"");
+
 	if (ssReplay.dynamicHeight) {
 		result.heights = ssReplay.dynamicHeight.map(el => ({time: el.a, height: el.h}));
 	}
@@ -62,6 +79,13 @@ function ssReplayToBSOR(ssReplay) {
 			note.spawnTime = i;
 			note.eventType = score > 0 ? NoteEventType.good : (score + 1) * -1;
 			note.score = score;
+			if (note.eventType == NoteEventType.good) {
+				note.noteCutInfo = {
+					cutDistanceToCenter: 0.3 - clamp(score / 15.0, 0.0, 1.0) * 0.3,
+					beforeCutRating: clamp((score - 15) / 70.0, 0.0, 1.0),
+					afterCutRating: clamp((score - 15 - 70) / 30.0, 0.0, 1.0),
+				};
+			}
 			result.notes.push(note);
 		} else {
 			var wall = {};

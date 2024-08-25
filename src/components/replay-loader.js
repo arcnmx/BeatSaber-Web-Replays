@@ -94,7 +94,7 @@ AFRAME.registerComponent('replay-loader', {
 					null
 				);
 
-				checkBSOR(data.replay, true, replay => {
+				checkFile(data.replay, true, replay => {
 					if (replay && replay.frames) {
 						if (replay.frames.length == 0) {
 							this.el.sceneEl.emit('replayloadfailed', {error: 'Replay broken, redownload and reinstall mod, please'}, null);
@@ -158,7 +158,7 @@ AFRAME.registerComponent('replay-loader', {
 
 	fetchByFile: function (file, itsLink) {
 		this.el.sceneEl.emit('replayloadstart', null);
-		checkBSOR(file, itsLink, replay => {
+		checkFile(file, itsLink, replay => {
 			if (replay && replay.frames) {
 				this.replay = replay;
 				this.fetchPlayer(replay.info.playerID);
@@ -663,4 +663,14 @@ function ScoreForNote(eventType, cutInfo, scoringType) {
 				return -4;
 		}
 	}
+}
+
+function checkFile(file, isLink, completion) {
+	if (isLink) {
+		const filename = file.split('?')[0];
+		if (filename.split('.').pop() == 'dat')
+			checkSS(file, isLink, completion);
+		} else {
+			checkBSOR(file, isLink, completion);
+		}
 }

@@ -34,7 +34,7 @@ function checkBSOR(file, isLink, completion) {
 function checkBSORFile(file, completion) {
 	var reader = new FileReader();
 	reader.onload = function (e) {
-		decode(e.target.result, completion);
+		completion(decodeBSOR(e.target.result));
 	};
 	reader.onerror = function (e) {
 		// error occurred
@@ -59,7 +59,7 @@ const NoteEventType = {
 	bomb: 3,
 };
 
-function decode(arrayBuffer, completion) {
+function decodeBSOR(arrayBuffer) {
 	const dataView = new DataView(arrayBuffer);
 	dataView.pointer = 0;
 
@@ -93,9 +93,9 @@ function decode(arrayBuffer, completion) {
 			}
 		}
 
-		completion(replay);
+		return replay;
 	} else {
-		completion('Error: failed to decode replay');
+		return 'Error: failed to decode replay';
 	}
 }
 
@@ -331,4 +331,6 @@ function DecodeBool(dataView) {
 }
 
 module.exports.checkBSOR = checkBSOR;
+module.exports.decodeBSOR = decodeBSOR;
 module.exports.NoteEventType = NoteEventType;
+module.exports.StructType = StructType;

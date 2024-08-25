@@ -153,7 +153,7 @@ function decompressSS(arrayBuffer, completion) {
 			}
 		},
 		percent => {
-			console.log(percent);
+			//console.log(percent);
 		}
 	);
 }

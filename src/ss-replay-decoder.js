@@ -1,4 +1,4 @@
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const {clamp} = require('./utils');
 
 function checkSS(file, isLink, completion) {
 	if (isLink) {
@@ -30,7 +30,7 @@ function checkSS(file, isLink, completion) {
 function checkSSFile(file, completion) {
 	var reader = new FileReader();
 	reader.onload = function (e) {
-		decode(e.target.result, completion);
+		decodeSS(e.target.result, completion);
 	};
 	reader.onerror = function (e) {
 		// error occurred
@@ -39,10 +39,27 @@ function checkSSFile(file, completion) {
 	reader.readAsArrayBuffer(file);
 }
 
+// 1 = Easy, 3 = Normal, 5 = Hard, 7 = Expert, 9 = Expert+
+const ssDifficultyNames = {
+	'1': 'Easy',
+	'3': 'Normal',
+	'5': 'Hard',
+	'7': 'Expert',
+	'9': 'ExpertPlus',
+};
 function ssReplayToBSOR(ssReplay) {
-	var result = {ssReplay: true};
+	var result = {ssReplay: true, ssData: ssReplay};
 
-	result.info = ssReplay.info;
+	result.info = Object.assign({}, ssReplay.info);
+	const difficulty = ssDifficultyNames[ssReplay.info.difficulty];
+	if (difficulty !== undefined) {
+		result.info.difficulty = difficulty;
+	} else {
+		result.info.difficulty = ssReplay.info.difficulty.toString();
+	}
+	result.info.modifiers = ssReplay.info.modifiers.join(', ');
+	result.info.hash = ssReplay.info.hash.replace(/^custom_level_/,"");
+
 	if (ssReplay.dynamicHeight) {
 		result.heights = ssReplay.dynamicHeight.map(el => ({time: el.a, height: el.h}));
 	}
@@ -62,6 +79,13 @@ function ssReplayToBSOR(ssReplay) {
 			note.spawnTime = i;
 			note.eventType = score > 0 ? NoteEventType.good : (score + 1) * -1;
 			note.score = score;
+			if (note.eventType == NoteEventType.good) {
+				note.noteCutInfo = {
+					beforeCutRating: clamp(score / 70.0, 0.0, 1.0),
+					afterCutRating: clamp((score -= 70) / 30.0, 0.0, 1.0),
+					cutDistanceToCenter: 0.3 - clamp((score -= 30) / 15.0, 0.0, 1.0) * 0.3,
+				};
+			}
 			result.notes.push(note);
 		} else {
 			var wall = {};
@@ -85,7 +109,19 @@ const NoteEventType = {
 	bomb: 3,
 };
 
-function decode(arrayBuffer, completion) {
+function decodeSS(arrayBuffer, completion) {
+	decompressSS(arrayBuffer, result => {
+		if (result.errorMessage !== undefined) {
+			completion(result);
+		} else {
+			const dataView = new DataView(new Uint8Array(result).buffer);
+			dataView.pointer = 0;
+			completion(decodeSSPayload(dataView));
+		}
+	})
+}
+
+function decompressSS(arrayBuffer, completion) {
 	var bytes = new TextEncoder().encode('ScoreSaber Replay \uD83D\uDC4C\uD83E\uDD20\r\n');
 	var sourceIndex = bytes.length;
 	var start = new Int8Array(arrayBuffer.slice(0, sourceIndex));
@@ -111,9 +147,7 @@ function decode(arrayBuffer, completion) {
 		data,
 		(result, error) => {
 			if (result) {
-				const dataView = new DataView(new Uint8Array(result).buffer);
-				dataView.pointer = 0;
-				continueDecode(dataView, completion);
+				completion(result);
 			} else {
 				completion({errorMessage: "Can't unzip the replay"});
 			}
@@ -131,7 +165,7 @@ function decode(arrayBuffer, completion) {
 
 // Want to improve it? Feel free to do that!
 // I'll spend as little time on SS support as I can.
-function continueDecode(dataView, completion) {
+function decodeSSPayload(dataView) {
 	const offsets = decodeOffsets(dataView);
 
 	var info = decodeInfo(dataView, offsets.replayInfo);
@@ -145,10 +179,10 @@ function continueDecode(dataView, completion) {
 
 	var result = {};
 	result.frames = frames;
-	var intList1 = [];
-	var intList2 = [];
-	var floatList = [];
-	var stringList = [];
+	result.scores = [];
+	result.combos = [];
+	result.noteTime = [];
+	result.noteInfos = [];
 	var intAndFloatList = fifthArray;
 	for (var index1 = fifthArray.length - 1; index1 >= 0; --index1) {
 		for (var index2 = 0; index2 < thirdArray.length; ++index2) {
@@ -178,11 +212,11 @@ function continueDecode(dataView, completion) {
 		var num3 = Math.round(70 * somethingBig.beforeCutRating);
 		var num4 = Math.round(30 * somethingBig.afterCutRating);
 		var num5 = Math.round(15 * (1 - clamp(somethingBig.cutDistanceToCenter / 0.3, 0, 1)));
-		if (somethingBig.type == 1) intList1.push(num3 + num4 + num5);
-		else intList1.push(-somethingBig.type);
-		intList2.push(somethingBig.combo >= 0 ? somethingBig.combo : 1);
-		floatList.push(somethingBig.songTime);
-		stringList.push(
+		if (somethingBig.type == 1) result.scores.push(num3 + num4 + num5);
+		else result.scores.push(-somethingBig.type);
+		result.combos.push(somethingBig.combo >= 0 ? somethingBig.combo : 1);
+		result.noteTime.push(somethingBig.songTime);
+		result.noteInfos.push(
 			'' +
 				somethingBig.noteData.lineIndex +
 				somethingBig.noteData.noteLineLayer +
@@ -192,17 +226,13 @@ function continueDecode(dataView, completion) {
 	}
 	result.info = info;
 	for (var index = 0; index < intAndFloatList.length; ++index) {
-		intList1.push(-5);
-		intList2.push(intAndFloatList[index].i);
-		floatList.push(intAndFloatList[index].a);
+		result.scores.push(-5);
+		result.combos.push(intAndFloatList[index].i);
+		result.noteTime.push(intAndFloatList[index].a);
 	}
-	result.scores = intList1;
-	result.combos = intList2;
-	result.noteTime = floatList;
-	result.noteInfos = stringList;
 	result.dynamicHeight = automaticHeight;
 
-	completion(ssReplayToBSOR(result));
+	return ssReplayToBSOR(result);
 }
 
 function decodeOffsets(dataView) {
@@ -403,3 +433,6 @@ function DecodeBool(dataView) {
 }
 
 module.exports.checkSS = checkSS;
+module.exports.decodeSS = decodeSS;
+module.exports.decodeSSPayload = decodeSSPayload;
+module.exports.decompressSS = decompressSS;

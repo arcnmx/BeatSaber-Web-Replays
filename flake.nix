@@ -15,7 +15,7 @@
     legacyPackages = {
     };
     devShells = {
-      default = { mkShell, writeShellScriptBin, nodePackages_latest, netlify-cli, deno }: let
+      default = { mkShell, writeShellScriptBin, nodePackages_latest, netlify-cli, deno, xz }: let
         npminstall = writeShellScriptBin "npminstall" ''
           set -eu
           npm install --include=dev "$@"
@@ -24,12 +24,23 @@
           set -eu
           exec netlify dev "$@"
         '';
+        dat2bsor = writeShellScriptBin "dat2bsor" ''
+          exec node ./bin/dat2bsor.js "$@"
+        '';
+        sspayload = writeShellScriptBin "sspayload" ''
+          set -eu
+          DAT_PATH=$1
+          shift
+          tail -c +29 "$DAT_PATH" | ${xz}/bin/lzcat
+        '';
       in mkShell {
         nativeBuildInputs = with nodePackages_latest; [
           nodejs
           npm
           npminstall
           netserve
+          dat2bsor
+          sspayload
           netlify-cli
           deno
         ];

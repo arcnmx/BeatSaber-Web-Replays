@@ -19,6 +19,8 @@
         npminstall = writeShellScriptBin "npminstall" ''
           set -eu
           npm install
+          rm -rf node_modules/webpack{,-cli,-dev-server}
+          ln -sT ${nodePackages_latest.webpack}/lib/node_modules/webpack node_modules/webpack
         '';
         npmserve = writeShellScriptBin "npmserve" ''
           set -eu
@@ -40,10 +42,17 @@
           npm
           npminstall
           npmserve
+          webpack
+          webpack-dev-server
+          webpack-cli
           dat2bsor
           sspayload
           netlify-cli
           deno
+        ];
+        propagatedBuildInputs = with nodePackages_latest; [
+          webpack
+          #webpack-dev-server
         ];
         NODE_ENV = "production";
         shellHook = ''

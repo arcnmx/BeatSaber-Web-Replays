@@ -1,4 +1,5 @@
 const {clamp} = require('./utils');
+const {NoteEventType} = require('./open-replay-decoder');
 
 function checkSS(file, isLink, completion) {
 	if (isLink) {
@@ -66,6 +67,59 @@ function ssReplayToBSOR(ssReplay) {
 
 	result.notes = [];
 	result.walls = [];
+	const newDecode = false;
+	if (newDecode) {
+		ssReplay.hits.forEach((ssnote, i) => {
+			var note = {};
+			note.noteID = ssnote.noteData.lineIndex * 1000 + ssnote.noteData.noteLineLayer * 100 + ssnote.noteData.colorType * 10 + ssnote.noteData.cutDirection;
+			note.eventTime = ssnote.songTime;
+			note.spawnTime = i;
+		// TODO: ssnote..timeScale = DecodeFloat(dataView);
+			// TODO: ssnote.timeScale2 = DecodeFloat(dataView);
+
+			switch (ssnote.type) {
+				case SomethingType.good:
+					note.eventType = NoteEventType.good;
+					note.noteCutInfo = {
+						beforeCutRating: ssnote.beforeCutRating,
+						afterCutRating: ssnote.afterCutRating,
+						cutDistanceToCenter: ssnote.cutDistanceToCenter,
+						timeDeviation: ssnote.songTime - ssnote.noteData.songTime,
+						cutPoint: ssnote.cutPoint,
+						cutNormal: ssnote.cutNormal,
+						saberDir: ssnote.saberDir,
+						saberType: ssnote.saberType,
+						directionOK: ssnote.directionOK,
+						saberSpeed: ssnote.saberSpeed,
+						cutAngle: ssnote.cutAngle,
+						cutDirDeviation: ssnote.cutDirDeviation,
+						//speedOK: true,
+						//saberTypeOK: true,
+						//wasCutTooSoon: false,
+					};
+					break;
+				case SomethingType.bad:
+					note.eventType = NoteEventType.bad;
+					break;
+				case SomethingType.miss:
+					note.eventType = NoteEventType.miss;
+					break;
+				case SomethingType.bomb:
+					note.eventType = NoteEventType.bomb;
+					break;
+				default:
+					console.error('unknown ss note type', ssnote.type);
+					return;
+			}
+			result.notes.push(note);
+		});
+		ssReplay.walls.forEach((sswall, i) => {
+			const wall = {
+				time: sswall.songTime,
+			};
+			result.walls.push(wall);
+		});
+	} else
 	ssReplay.scores.forEach((score, i) => {
 		if (i < ssReplay.noteInfos.length) {
 			var note = {};
@@ -78,12 +132,11 @@ function ssReplayToBSOR(ssReplay) {
 			note.eventTime = ssReplay.noteTime[i];
 			note.spawnTime = i;
 			note.eventType = score > 0 ? NoteEventType.good : (score + 1) * -1;
-			note.score = score;
 			if (note.eventType == NoteEventType.good) {
 				note.noteCutInfo = {
-					beforeCutRating: clamp(score / 70.0, 0.0, 1.0),
-					afterCutRating: clamp((score -= 70) / 30.0, 0.0, 1.0),
-					cutDistanceToCenter: 0.3 - clamp((score -= 30) / 15.0, 0.0, 1.0) * 0.3,
+					beforeCutRating: ssReplay.hits[i].beforeCutRating, //clamp(score / 70.0, 0.0, 1.0),
+					afterCutRating: ssReplay.hits[i].afterCutRating,//clamp((score -= 70) / 30.0, 0.0, 1.0),
+					cutDistanceToCenter: ssReplay.hits[i].cutDistanceToCenter,//0.3 - clamp((score -= 30) / 15.0, 0.0, 1.0) * 0.3,
 				};
 			}
 			result.notes.push(note);
@@ -101,13 +154,6 @@ function ssReplayToBSOR(ssReplay) {
 
 	return result;
 }
-
-const NoteEventType = {
-	good: 0,
-	bad: 1,
-	miss: 2,
-	bomb: 3,
-};
 
 function decodeSS(arrayBuffer, completion) {
 	decompressSS(arrayBuffer, result => {
@@ -158,6 +204,13 @@ function decompressSS(arrayBuffer, completion) {
 	);
 }
 
+const SomethingType = {
+	good: 1,
+	bad: 2,
+	miss: 3,
+	bomb: 4,
+}
+
 // WARNING
 // Attrocious code. It's reverse engineered code
 // I'm just copying now spending as little time as I can
@@ -178,7 +231,9 @@ function decodeSSPayload(dataView) {
 	info.totalScore = fourthArray[fourthArray.length - 1].i;
 
 	var result = {};
+	result.info = info;
 	result.frames = frames;
+	result.dynamicHeight = automaticHeight;
 	result.scores = [];
 	result.combos = [];
 	result.noteTime = [];
@@ -207,8 +262,10 @@ function decodeSSPayload(dataView) {
 		if (a.noteData.songTime > b.noteData.songTime) return 1;
 		return 0;
 	});
+	result.hits = [];
 	for (var index = 0; index < thirdArray.length; ++index) {
 		var somethingBig = thirdArray[index];
+		result.hits.push(somethingBig);
 		var num3 = Math.round(70 * somethingBig.beforeCutRating);
 		var num4 = Math.round(30 * somethingBig.afterCutRating);
 		var num5 = Math.round(15 * (1 - clamp(somethingBig.cutDistanceToCenter / 0.3, 0, 1)));
@@ -224,13 +281,16 @@ function decodeSSPayload(dataView) {
 				somethingBig.noteData.colorType
 		);
 	}
-	result.info = info;
+	result.walls = [];
 	for (var index = 0; index < intAndFloatList.length; ++index) {
+		result.walls.push({
+			songTime: intAndFloatList[index].a,
+			combo: intAndFloatList[index].i,
+		})
 		result.scores.push(-5);
 		result.combos.push(intAndFloatList[index].i);
 		result.noteTime.push(intAndFloatList[index].a);
 	}
-	result.dynamicHeight = automaticHeight;
 
 	return ssReplayToBSOR(result);
 }

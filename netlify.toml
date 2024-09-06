@@ -1,5 +1,5 @@
 [dev]
-    command = "npm run start"
+    command = "npmserve --hot --port 3003"
     publish = ".publish"
     port = 9999
     targetPort = 3003

@@ -1,0 +1,94 @@
+{
+  "nodes": {
+    "fl-config": {
+      "locked": {
+        "lastModified": 1653159448,
+        "narHash": "sha256-PvB9ha0r4w6p412MBPP71kS/ZTBnOjxL0brlmyucPBA=",
+        "owner": "flakelib",
+        "repo": "fl",
+        "rev": "fcefb9738d5995308a24cda018a083ccb6b0f460",
+        "type": "github"
+      },
+      "original": {
+        "owner": "flakelib",
+        "ref": "config",
+        "repo": "fl",
+        "type": "github"
+      }
+    },
+    "flakelib": {
+      "inputs": {
+        "fl-config": "fl-config",
+        "std": "std"
+      },
+      "locked": {
+        "lastModified": 1701802971,
+        "narHash": "sha256-Zo5fJpXbe+xXOTiDT4JG2rExobMJTmFZ72+3XTMMHrQ=",
+        "owner": "flakelib",
+        "repo": "fl",
+        "rev": "b71a91517f6b16aa5faefe8ec491d9f3062d7a20",
+        "type": "github"
+      },
+      "original": {
+        "owner": "flakelib",
+        "repo": "fl",
+        "type": "github"
+      }
+    },
+    "nix-std": {
+      "locked": {
+        "lastModified": 1701658249,
+        "narHash": "sha256-KIt1TUuBvldhaVRta010MI5FeQlB8WadjqljybjesN0=",
+        "owner": "chessai",
+        "repo": "nix-std",
+        "rev": "715db541ffff4194620e48d210b76f73a74b5b5d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "chessai",
+        "repo": "nix-std",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1725542439,
+        "narHash": "sha256-+c+ULwR2TVKrkkQZJcT1G85IWQwoCek+he4sMM74OIs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "8b16862469fc1e239f672ddd2e9af3fa9dd9352d",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flakelib": "flakelib",
+        "nixpkgs": "nixpkgs"
+      }
+    },
+    "std": {
+      "inputs": {
+        "nix-std": "nix-std"
+      },
+      "locked": {
+        "lastModified": 1701802337,
+        "narHash": "sha256-JCVCyjDZ6LA0xyVoDZzRXjy0OgWOZo3OpeZEVm/U97w=",
+        "owner": "flakelib",
+        "repo": "std",
+        "rev": "443d1c8246b3d96a4822b02af907ca0d833e8b63",
+        "type": "github"
+      },
+      "original": {
+        "owner": "flakelib",
+        "repo": "std",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

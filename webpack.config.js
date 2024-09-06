@@ -69,7 +69,7 @@ if (process.env.NODE_ENV === 'production') {
 
 module.exports = {
 	devServer: {
-		disableHostCheck: true,
+		allowedHosts: "all",
 	},
 	entry: './src/index.js',
 	output: {
@@ -96,7 +96,7 @@ module.exports = {
 			{
 				test: /\.styl$/,
 				exclude: /(node_modules)/,
-				loaders: [
+				use: [
 					'style-loader',
 					{
 						loader: 'css-loader',

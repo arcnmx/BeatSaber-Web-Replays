@@ -1,3 +1,5 @@
+const { Buffer } = require('buffer');
+
 var sourceCreatedCallback;
 
 const isSafari = navigator.userAgent.toLowerCase().indexOf('safari') !== -1 && navigator.userAgent.toLowerCase().indexOf('chrome') === -1;

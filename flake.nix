@@ -18,7 +18,9 @@
       default = { mkShell, writeShellScriptBin, nodePackages_latest, netlify-cli, deno }: let
         npminstall = writeShellScriptBin "npminstall" ''
           set -eu
-          npm install --include=dev "$@"
+          npm install "$@"
+          rm -rf node_modules/webpack{,-cli,-dev-server}
+          ln -sT ${nodePackages_latest.webpack}/lib/node_modules/webpack node_modules/webpack
         '';
         netserve = writeShellScriptBin "netserve" ''
           set -eu
@@ -32,12 +34,18 @@
           netserve
           netlify-cli
           deno
+          webpack
+          webpack-dev-server
+          webpack-cli
+        ];
+        propagatedBuildInputs = with nodePackages_latest; [
+          webpack
+          #webpack-dev-server
         ];
         NODE_ENV = "production";
         shellHook = ''
           export BSREPLAY_ROOT=''${BSREPLAY_ROOT-${toString ./.}}
           export NODE_PATH=''${NODE_PATH-$BSREPLAY_ROOT}
-          export PATH="$BSREPLAY_ROOT/node_modules/.bin:$PATH"
         '';
       };
     };

@@ -122,10 +122,12 @@ AFRAME.registerState({
 
 	handlers: {
 		beatloaderpreloadfinish: state => {
+			console.log("handlers.beatloaderpreloadfinish()");
 			state.challenge.isBeatsPreloaded = true;
 		},
 
 		songFetched: (state, payload) => {
+			console.log("handlers.songFetched()");
 			state.challenge.image = payload.image;
 			state.challenge.author = payload.metadata.levelAuthorName;
 
@@ -149,11 +151,13 @@ AFRAME.registerState({
 		},
 
 		challengeloadstart: (state, payload) => {
+			console.log("handlers.challengeloadstart()");
 			state.challenge.hasLoadError = false;
 			state.challenge.isLoading = true;
 		},
 
 		challengeloadend: (state, payload) => {
+			console.log("handlers.challengeloadend()");
 			beatmaps = payload.beatmaps;
 			difficulties = payload.difficulties;
 
@@ -185,6 +189,7 @@ AFRAME.registerState({
 		},
 
 		songstartaudio: (state, payload) => {
+			console.log("handlers.songstartaudio()");
 			navigator.mediaSession.metadata = new MediaMetadata({
 				title: state.challenge.songName,
 				artist: state.challenge.songSubName,
@@ -198,6 +203,7 @@ AFRAME.registerState({
 		},
 
 		replayloadstart: (state, payload) => {
+			console.log("handlers.replayloadstart()");
 			state.localReplay = false;
 			state.replay.isLoading = true;
 			state.replay.hasError = false;
@@ -205,6 +211,7 @@ AFRAME.registerState({
 		},
 
 		replayloaded: (state, payload) => {
+			console.log("handlers.replayloaded()");
 			state.replay.isLoading = false;
 			state.notes = payload.notes;
 			console.log(state.challenge);
@@ -214,6 +221,7 @@ AFRAME.registerState({
 		},
 
 		replayloadfailed: (state, payload) => {
+			console.log("handlers.replayloadfailed()");
 			state.replay.isLoading = false;
 			state.replay.hasError = true;
 			state.replay.errorText = payload.error;
@@ -221,6 +229,7 @@ AFRAME.registerState({
 		},
 
 		userloaded: (state, payload) => {
+			console.log("handlers.userloaded()");
 			state.player = payload;
 
 			document.title = `Replay | ${state.player.name} | ${state.challenge.songName}`;
@@ -230,20 +239,24 @@ AFRAME.registerState({
 		},
 
 		challengeloaderror: (state, payload) => {
+			console.log("handlers.challengeloaderror()");
 			state.challenge.hasLoadError = true;
 			state.challenge.isLoading = false;
 			state.challenge.loadErrorText = `Map was not found. Drop or click to select zip locally`;
 		},
 
 		controllerconnected: (state, payload) => {
+			console.log("handlers.controllerconnected()");
 			state.controllerType = payload.name;
 		},
 
 		scoreChanged: (state, payload) => {
+			console.log("handlers.scoreChanged()");
 			updateScore(state, {index: payload.index}, false);
 		},
 
 		victory: function (state) {
+			console.log("handlers.victory()");
 			state.isVictory = true;
 
 			// Percentage is score divided by total possible score.
@@ -279,11 +292,13 @@ AFRAME.registerState({
 		},
 
 		victoryfake: function (state) {
+			console.log("handlers.victoryfake()");
 			state.score.accuracy = '74.99';
 			state.score.rank = 'C';
 		},
 
 		wallhitstart: function (state) {
+			console.log("handlers.wallhitstart()");
 			takeDamage(state);
 		},
 
@@ -291,12 +306,14 @@ AFRAME.registerState({
 		 * ?debugstate=loading
 		 */
 		debugloading: state => {
+			console.log("handlers.debugloading()");
 			DEBUG_CHALLENGE.id = '-1';
 			Object.assign(state.challenge, DEBUG_CHALLENGE);
 			state.challenge.isLoading = true;
 		},
 
 		difficultyselect: (state, payload) => {
+			console.log("handlers.difficultyselect()");
 			state.challenge.difficulty = payload;
 			state.challenge.isBeatsPreloaded = false;
 			state.isPaused = false;
@@ -304,10 +321,12 @@ AFRAME.registerState({
 		},
 
 		gamemenuresume: state => {
+			console.log("handlers.gamemenuresume()");
 			state.isPaused = false;
 		},
 
 		gamemenurestart: state => {
+			console.log("handlers.gamemenurestart()");
 			state.challenge.isBeatsPreloaded = false;
 			state.isPaused = false;
 			state.isFinished = false;
@@ -316,6 +335,7 @@ AFRAME.registerState({
 		},
 
 		timechanged: (state, payload) => {
+			console.log("handlers.timechanged()");
 			state.isFinished = false;
 			let notes = state.notes;
 			for (var i = notes.length; --i > 0; ) {
@@ -332,6 +352,7 @@ AFRAME.registerState({
 		},
 
 		modeselect: (state, payload) => {
+			console.log("handlers.modeselect()");
 			state.challenge.mode = payload;
 			state.challenge.isBeatsPreloaded = false;
 			state.isPaused = false;
@@ -342,6 +363,7 @@ AFRAME.registerState({
 		},
 
 		pausegame: state => {
+			console.log("handlers.pausegame()");
 			if (!state.isPlaying) {
 				return;
 			}
@@ -349,6 +371,7 @@ AFRAME.registerState({
 		},
 
 		finishgame: state => {
+			console.log("handlers.finishgame()");
 			if (!state.isPlaying) {
 				return;
 			}
@@ -357,18 +380,22 @@ AFRAME.registerState({
 		},
 
 		songprocessingfinish: state => {
+			console.log("handlers.songprocessingfinish()");
 			state.isSongBufferProcessing = false;
 		},
 
 		songprocessingstart: state => {
+			console.log("handlers.songprocessingstart()");
 			state.isSongBufferProcessing = true;
 		},
 
 		usergesturereceive: state => {
+			console.log("handlers.usergesturereceive()");
 			state.hasReceivedUserGesture = true;
 		},
 
 		settingsChanged: (state, payload) => {
+			console.log("handlers.settingsChanged()");
 			state.settings = payload.settings;
 
 			const saberScale = payload.settings.saberWidth / 100;
@@ -380,23 +407,28 @@ AFRAME.registerState({
 		},
 
 		povchanged: (state, payload) => {
+			console.log("handlers.povchanged()");
 			state.pov = payload.newPov;
 		},
 
 		useractive: (state, payload) => {
+			console.log("handlers.useractive()");
 			state.useractive = payload.isActive;
 		},
 
 		wrongMiss: (state, payload) => {
+			console.log("handlers.wrongMiss()");
 			state.wrongMisses++;
 			console.log('Wrong miss #' + state.wrongMisses);
 		},
 
 		'enter-vr': state => {
+			console.log("handlers.enter-vr()");
 			state.inVR = true;
 		},
 
 		'exit-vr': state => {
+			console.log("handlers.exit-vr()");
 			state.inVR = false;
 		},
 	},

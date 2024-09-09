@@ -56,7 +56,7 @@ AFRAME.registerComponent('song-controls', {
 		analyser.addEventListener('audioanalyserbuffersource', evt => {
 			const songDuration = evt.detail.buffer.duration;
 			document.getElementById('songDuration').innerHTML = formatSeconds(songDuration);
-			if (this.shouldShowMisses) {
+			if (this.shouldShowMisses && this.replayData !== undefined) {
 				this.makeTimelineOverlay(this.replayData, evt.detail.buffer, this);
 				this.shouldShowMisses = false;
 			}
@@ -66,7 +66,8 @@ AFRAME.registerComponent('song-controls', {
 				this.playhead.style.width = progress + '%';
 
 				document.getElementById('songProgress').innerHTML = formatSeconds(queryParamTime);
-				this.timelineFilter.style.width = this.timeline.getBoundingClientRect().width * percent + 'px';
+				if (this.timelineFilter !== undefined)
+					this.timelineFilter.style.width = this.timeline.getBoundingClientRect().width * percent + 'px';
 			}
 		});
 
@@ -349,6 +350,8 @@ AFRAME.registerComponent('song-controls', {
 				handleLeave();
 				return;
 			}
+			if (this.replayData === undefined)
+				return;
 			const seconds = percent * this.song.source.buffer.duration;
 
 			var previousNote = null;
@@ -1257,7 +1260,8 @@ AFRAME.registerComponent('song-controls', {
 			this.el.sceneEl.emit('timechanged', {newTime: this.song.getCurrentTime()}, null);
 		}
 
-		this.timelineFilter.style.width = this.timeline.getBoundingClientRect().width * percent + 'px';
+		if (this.timelineFilter !== undefined)
+			this.timelineFilter.style.width = this.timeline.getBoundingClientRect().width * percent + 'px';
 
 		if (this.song.speed > 0 && 'mediaSession' in navigator) {
 			navigator.mediaSession.setPositionState({

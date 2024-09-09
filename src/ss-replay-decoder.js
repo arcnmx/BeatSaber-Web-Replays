@@ -184,9 +184,10 @@ function decompressSS(arrayBuffer, completion) {
 		return;
 	}
 
-	var LZMA = require('../vendor/lzma-min.js');
-
-	var my_lzma = new LZMA.LZMA('vendor/lzma_worker.js');
+	/*const lzma_min = '/vendor/lzma-min';
+	const LZMA = require(lzma_min);
+	const worker = 'vendor/lzma_worker.js';*/
+	var my_lzma = new LZMA.LZMA(worker);
 	var data = new Uint8Array(arrayBuffer.slice(sourceIndex));
 
 	my_lzma.decompress(

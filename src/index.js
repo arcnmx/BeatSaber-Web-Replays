@@ -5,6 +5,8 @@ function requireAll(req) {
 console.time = () => {};
 console.timeEnd = () => {};
 
+//global.THREE = require('three');
+
 require('../vendor/BufferGeometryUtils');
 
 require('aframe-aabb-collider-component');
